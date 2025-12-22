@@ -112,16 +112,27 @@ end
 local function getCurrentLetters()
     local success, result = pcall(function()
         local inGame = playerGui:FindFirstChild("InGame")
-        if not inGame then return nil end
+        if not inGame then 
+            print("[Last Letter] InGame not found")
+            return nil 
+        end
         
         local frame = inGame:FindFirstChild("Frame")
-        if not frame then return nil end
+        if not frame then 
+            print("[Last Letter] Frame not found")
+            return nil 
+        end
         
         local currentWord = frame:FindFirstChild("CurrentWord")
-        if not currentWord then return nil end
+        if not currentWord then 
+            print("[Last Letter] CurrentWord not found")
+            return nil 
+        end
         
         local letters = {}
         local children = currentWord:GetChildren()
+        
+        print(string.format("[Last Letter] Found %d children in CurrentWord", #children))
         
         -- Sort by name (numerical)
         table.sort(children, function(a, b)
@@ -138,6 +149,7 @@ local function getCurrentLetters()
                 local letter = child:FindFirstChild("Letter")
                 if letter and letter:IsA("TextLabel") then
                     local letterText = letter.Text:lower()
+                    print(string.format("[Last Letter] Frame %s has letter: '%s'", child.Name, letterText))
                     if letterText ~= "" and letterText ~= " " then
                         table.insert(letters, letterText)
                     end
@@ -145,7 +157,9 @@ local function getCurrentLetters()
             end
         end
         
-        return table.concat(letters, "")
+        local result = table.concat(letters, "")
+        print(string.format("[Last Letter] Final letters: '%s'", result))
+        return result
     end)
     
     if success then
@@ -356,37 +370,61 @@ end)
 
 -- Current Letters Display
 local displayLabel = Instance.new("TextLabel")
-displayLabel.Size = UDim2.new(1,-20,0,80)
+displayLabel.Size = UDim2.new(1,-20,0,65)
 displayLabel.Position = UDim2.fromOffset(10,60)
 displayLabel.Text = "Current Letters: [Waiting...]"
 displayLabel.Font = Enum.Font.Code
-displayLabel.TextSize = 13
+displayLabel.TextSize = 11
 displayLabel.TextColor3 = Color3.fromRGB(240,240,240)
 displayLabel.TextWrapped = true
 displayLabel.TextXAlignment = Enum.TextXAlignment.Left
 displayLabel.TextYAlignment = Enum.TextYAlignment.Top
+displayLabel.TextScaled = false
 displayLabel.BackgroundColor3 = Color3.fromRGB(45,45,45)
 displayLabel.BorderSizePixel = 2
 displayLabel.BorderColor3 = Color3.fromRGB(70,70,70)
+displayLabel.ClipsDescendants = true
 displayLabel.Parent = mainTab
 
 local displayPad = Instance.new("UIPadding")
-displayPad.PaddingTop = UDim.new(0,8)
-displayPad.PaddingLeft = UDim.new(0,8)
-displayPad.PaddingRight = UDim.new(0,8)
+displayPad.PaddingTop = UDim.new(0,5)
+displayPad.PaddingBottom = UDim.new(0,5)
+displayPad.PaddingLeft = UDim.new(0,6)
+displayPad.PaddingRight = UDim.new(0,6)
 displayPad.Parent = displayLabel
 
--- Update display
+-- Update display with debug info
 task.spawn(function()
     while task.wait(0.5) do
-        local letters = getCurrentLetters()
-        
-        if letters and #letters > 0 then
-            displayLabel.Text = string.format("Current Letters: %s\n\nLength: %d characters", 
-                letters:upper(), #letters)
-        else
-            displayLabel.Text = "Current Letters: [Waiting for game...]"
-        end
+        pcall(function()
+            local inGame = playerGui:FindFirstChild("InGame")
+            
+            if not inGame then
+                displayLabel.Text = "Status: InGame not found\n\nWaiting for game UI..."
+                return
+            end
+            
+            local frame = inGame:FindFirstChild("Frame")
+            if not frame then
+                displayLabel.Text = "Status: Frame not found\n\nInGame exists but no Frame"
+                return
+            end
+            
+            local currentWord = frame:FindFirstChild("CurrentWord")
+            if not currentWord then
+                displayLabel.Text = "Status: CurrentWord not found\n\nFrame exists but no CurrentWord"
+                return
+            end
+            
+            local letters = getCurrentLetters()
+            
+            if letters and #letters > 0 then
+                displayLabel.Text = string.format("Current Letters:\n%s\n\nLength: %d", 
+                    letters:upper(), #letters)
+            else
+                displayLabel.Text = "Status: No letters found\n\nCurrentWord exists but empty"
+            end
+        end)
     end
 end)
 
