@@ -111,10 +111,10 @@ end
 -- Get current letters
 local function getCurrentLetters()
     local success, result = pcall(function()
-        local ingame = playerGui:FindFirstChild("Ingame")
-        if not ingame then return nil end
+        local inGame = playerGui:FindFirstChild("InGame")
+        if not inGame then return nil end
         
-        local frame = ingame:FindFirstChild("Frame")
+        local frame = inGame:FindFirstChild("Frame")
         if not frame then return nil end
         
         local currentWord = frame:FindFirstChild("CurrentWord")
@@ -137,7 +137,10 @@ local function getCurrentLetters()
             if child.Name ~= "Extra" and tonumber(child.Name) then
                 local letter = child:FindFirstChild("Letter")
                 if letter and letter:IsA("TextLabel") then
-                    table.insert(letters, letter.Text:lower())
+                    local letterText = letter.Text:lower()
+                    if letterText ~= "" and letterText ~= " " then
+                        table.insert(letters, letterText)
+                    end
                 end
             end
         end
@@ -148,6 +151,7 @@ local function getCurrentLetters()
     if success then
         return result
     else
+        warn("[Last Letter] Error getting letters:", result)
         return nil
     end
 end
